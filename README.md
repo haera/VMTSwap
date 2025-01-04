@@ -18,4 +18,5 @@ VMTSwap takes advantage of this behavior to intercept or modify vfunction calls.
 Unlike traditional VMT hooking, this method doesn't modify the original VMT; instead, it inserts a shadow (or copy) vtable in its place then swaps the instance's VPTR.
 
 ## Example usage
+- x86: [example_x86.cpp](examples/example_x86.cpp)
 - x64: [example_x64.cpp](examples/example_x64.cpp)
