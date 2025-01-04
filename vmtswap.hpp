@@ -4,9 +4,9 @@
 class VMTSwap
 {
 private:
-	void** m_ppOrigVMT;  // pointer to the VMT pointer (e.g., VPTR)
-	uintptr_t* m_pOrigVMT;   // original VMT
-	uintptr_t* m_pCopyVMT;   // copied (shadow) VMT
+	void**	    m_ppOrigVMT;  // pointer to the VMT pointer (e.g., VPTR)
+	uintptr_t*  m_pOrigVMT;   // original VMT
+	uintptr_t*  m_pCopyVMT;   // copied (shadow) VMT
 
 	size_t      m_szVMT = 0;  // num of virtual functions in vtable 
 
