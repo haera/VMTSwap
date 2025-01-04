@@ -1,5 +1,6 @@
 #pragma once
 #include <stdexcept>
+#include <windows.h>
 
 class VMTSwap
 {
@@ -11,7 +12,7 @@ private:
 	size_t      m_szVMT = 0;  // num of virtual functions in vtable 
 
 	/**
-	 * calculates the num of functions in VMT
+	 * calculates the num of functions in VMT - simple traversal
 	 * @return size of VMT
 	*/
 	size_t calc_vmt_size()
@@ -19,10 +20,34 @@ private:
 		if (!m_pOrigVMT)
 			return 0;
 
-		// could also query vmmem, but no more winapi for now
 		size_t fnCount = 0;
 		while (m_pOrigVMT[fnCount] != 0)
 			fnCount++;
+
+		return fnCount;
+	}
+
+	/**
+	 * calculates the num of functions in VMT - query virtual memory
+	 * @return size of VMT
+	*/
+	size_t calc_vmt_size_vmem()
+	{
+		if (!m_pOrigVMT)
+			return 0;
+
+		MEMORY_BASIC_INFORMATION mbi;
+
+		size_t fnCount = 0;
+		while (VirtualQuery(reinterpret_cast<LPCVOID>(m_pOrigVMT[fnCount]), &mbi, sizeof(mbi)))
+		{
+			if ( (mbi.State != MEM_COMMIT) || 
+				(mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS)) || 
+			   !(mbi.Protect & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)) )
+				break;
+
+			fnCount++;
+		}
 
 		return fnCount;
 	}
@@ -31,8 +56,9 @@ public:
 	/**
 	 * creates shadow copy of object's VMT and swaps it in
 	 * @param ptr: pointer to instance of object to be hooked
+	 * @param queryMem: optional flag - if set, will query virtual memory regions
 	*/
-	VMTSwap(void* ptr)
+	VMTSwap(void* ptr, bool queryMem = false)
 	{
 		if (!ptr)
 			throw std::invalid_argument("ptr cannot be null");
@@ -41,7 +67,7 @@ public:
 		m_ppOrigVMT = static_cast<void**>(ptr);
 		m_pOrigVMT = *reinterpret_cast<uintptr_t**>(ptr);
 
-		m_szVMT = calc_vmt_size();
+		m_szVMT = queryMem ? calc_vmt_size_vmem() : calc_vmt_size();
 
 		// alloc new vtable and copy the original over
 		if (!m_szVMT)
