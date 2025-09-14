@@ -1,8 +1,0 @@
-*
-
-!examples/
-!examples/**
-
-!vmtswap.hpp
-
-!.gitignore
